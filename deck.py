@@ -8,6 +8,16 @@ class Deck(object):
     #initial = ['Princess', 'Countess', 'King', 'Prince', 'Prince',\
     #        'Handmaiden', 'Handmaiden', 'Baron', 'Baron', 'Priest',\
     #        'Priest', 'Guard', 'Guard', 'Guard', 'Guard', 'Guard']
+    PRINCESS = 8
+    COUNTESS = 7
+    KING = 6
+    PRINCE = 5
+    HANDMAIDEN = 4
+    BARON = 3
+    PRIEST = 2
+    GUARD = 1
+    cardset = range(1,9)
+
 
     # cards are represented by their numeric values
     cards = [8, 7, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 1, 1, 1]

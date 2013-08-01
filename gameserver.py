@@ -34,44 +34,52 @@ class GameServer(object):
         return
 
     def generateActions(self):
-        legalTargets = [p for p in self.state.players if p.isTargetable and p is not self.state.currentPlayer]
-        actions = []
-        hand = self.currentPlayer.hand
-        
+        #TODO: make this nice and clean
+        hand = self.currPlayer.hand
+        actions = [(c, self.currPlayer, None, None) for c in hand]
+        targets = [p for p in self.state.players if p.isTargetable and p is not self.state.currPlayer]
+
+        if Deck.PRINCESS in hand:
+            actions.remove((Deck.Princess, self.currPlayer, None, None))
         if Deck.COUNTESS in hand:
-            actions.append(Action(self.currentPlayer, None, Deck.COUNTESS, None))
-        else:
-            if Deck.KING in hand:
-                for target in legalTargets:
-                    actions.append(Action(actor, target, Deck.KING, None))
-            elif Deck.PRINCE in hand:
-                for target in (legalTargets + [self.state.currentPlayer]):
-                    actions.append(Action(actor, target, Deck.PRINCE, None))
+            pass    
+        if Deck.KING in hand:
+            if Deck.COUNTESS in hand:
+                actions.remove((Deck.KING, self.currPlayer, None, None))
+            else:
+                actions.append([(Deck.KING, self.currPlayer, t, None) for t in targets]) 
+        if Deck.PRINCE in hand:
+            if Deck.COUNTESS in hand:
+                actions.remove((Deck.PRINCE, self.currPlayer, None, None))
+            else:
+                actions.append([(Deck.PRINCE, self.currPlayer, t, None) for t in targets])
+                actions.remove((Deck.PRINCE, self.currPlayer, None, None))
+                actions.append((Deck.PRINCE, self.currPlayer, self.currPlayer, None))
         if Deck.HANDMAIDEN in hand:
-            actions.append(Action(self.currentPlayer, self.currentPlayer, Deck.HANDMAIDEN, None))
+            actions.remove((Deck.HANDMAIDEN, self.currPlayer, None, None))
+            actions.append((Deck.HANDMAIDEN, self.currPlayer, self.currPlayer, None))
         if Deck.BARON in hand:
-            for target in legalTargets:
-                actions.append(Action(actor, target, Deck.BARON, None))
+            actions.append([(Deck.BARON, self.currPlayer, t, None) for t in targets])
         if Deck.PRIEST in hand:
-            for target in legalTargets:
-                actions.append(Action(actor, target, Deck.PRIEST, None))
+            actions.append([(Deck.PRIEST, self.currPlayer, t, None) for t in targets])
         if Deck.GUARD in hand:
-            actions.append(Action(actor, target, Deck.GUARD, None))
+            actions.append([(Deck.GUARD, self.currPlayer, t, g) for t in targets for g in Deck.cardset if g != Deck.GUARD])
         return actions
 
 
     def executeAction(self, action):
-        card = action.card
-        actor = action.actor
-        target = action.target
-        guess = action.guess
+        # assuming action is a 4-tuple
+        card = action[0]
+        actor = action[1]
+        target = action[2]
+        guess = action[3]
             
         if card == Deck.PRINCESS:
             raise Exception('cannot play princess')
         elif card == Deck.COUNTESS:      
             pass
         elif card == Deck.KING:       
-            if target != None:
+            if target is not None:
                 temp = actor.hand
                 actor.hand = target.hand
                 target.hand = temp
@@ -94,7 +102,9 @@ class GameServer(object):
         elif card == Deck.PRIEST: 
             pass
         elif card == Deck.GUARD:
-            pass
+            if guess in target.hand:
+                target.lose()
+                target.discard.append(target.hand)
         else:
             raise Exception('invalid action')
             
@@ -113,11 +123,10 @@ class GameServer(object):
                 break
         return
 
-    def isGameOver(self):
+    def checkGameOver(self):
         if len(self.state.deck) == 0 or len([p for p in self.state.players if p.isAlive]) == 1:
-            return True
-        else:
-            return False 
+            serv.state.gameOver = True
+        return
 
 def main():
 
@@ -141,6 +150,8 @@ def main():
         serv.newGame(int(numPlayers))
         # enter game loop
         while not self.state.gameOver:
+            # rotate starting player
+            serv.advanceTurn()
             # current player draws a card
             self.state.currPlayer.hand.append(self.state.deck.draw())
             # generate possible moves for current player
@@ -155,11 +166,7 @@ def main():
             else:
                 raise Exception('illegal action')
             # check if the game is over
-            if serv.isGameOver():
-                self.state.gameOver = True
-            else:
-                # rotate starting player
-                serv.advanceTurn()
+            serv.checkGameOver()
         # figure out winner
                         
     # calculate total scores/stats
