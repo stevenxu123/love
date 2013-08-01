@@ -6,6 +6,7 @@ from gamestate import *
 from player import *
 from deck import *
 from action import *
+from game import *
 
 class GameServer(object):
 
@@ -19,18 +20,6 @@ class GameServer(object):
             conn, addr = sock.accept()
             name = conn.recv(1024)
             self.sockets[name] = conn
-        return
-
-    def newGame(self):
-        # start a new game
-        self.state = GameState()
-        self.state.deck = Deck()
-        for name in self.sockets.keys():
-            newPlayer = Player(name)
-            newPlayer.hand.append(self.state.deck.draw())
-            self.state.players.append(newPlayer)
-        self.currPlayer = self.state.players[0]
-        self.currPlayer.isMyTurn = True
         return
 
     def generateActions(self):
@@ -107,26 +96,8 @@ class GameServer(object):
                 target.discard.append(target.hand)
         else:
             raise Exception('invalid action')
-            
-    def advanceTurn(self):
-        # want the next player cyclically who is still alive
-        for i, player in enumerate(self.state.players):
-            if player.isMyTurn:
-                player.isMyTurn = False
-                while True:
-                    nextPlayer = self.state.players[(i+1) % len(self.state.players)]
-                    if nextPlayer.isAlive:
-                        nextPlayer.isMyturn = True
-                        nextPlayer.isTargetable = True
-                        self.state.currPlayer = nextPlayer
-                        break
-                break
-        return
 
-    def checkGameOver(self):
-        if len(self.state.deck) == 0 or len([p for p in self.state.players if p.isAlive]) == 1:
-            serv.state.gameOver = True
-        return
+
 
 def main():
 
@@ -139,39 +110,66 @@ def main():
 
     # setting up server socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((socket.gethostname(), 8000))
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
+    s.bind((socket.gethostname(), 8002))
     s.listen(4)
 
     # wait for player connections 
     serv.getConnections(s, int(numPlayers))
+    print "connection received!"
 
     for n in range(numRounds):
-        # start new game
-        serv.newGame(int(numPlayers))
-        # enter game loop
-        while not self.state.gameOver:
-            # rotate starting player
-            serv.advanceTurn()
-            # current player draws a card
-            self.state.currPlayer.hand.append(self.state.deck.draw())
-            # generate possible moves for current player
-            legalActions = serv.generateActions()
-            # send game state to all players
-            
-            # receive move from starting player
-           
-            # execute action on game state
-            if action in legalActions:
-                serv.executeAction()
-            else:
-                raise Exception('illegal action')
-            # check if the game is over
-            serv.checkGameOver()
+        game = Game(serv, numPlayers)
+        game.run()
+    
+    for k,v in serv.sockets():
+        v.close()
+
+    s.close()
+
+    return
+
+
+
+
+
+
+
+    # testing pickling
+    serv.newGame()
+    print serv.state.deck.deck
+    print serv.sockets
+    #p = Deck()
+    #print p.deck
+    #serv.sockets['testbot3'].send(pickle.dumps(p))
+    serv.sockets['testbot3'].send(pickle.dumps(serv.state))
+
+    #for n in range(numRounds):
+    #    # start new game
+    #    serv.newGame(int(numPlayers))
+    #    # enter game loop
+    #    while not self.state.gameOver:
+    #        # rotate starting player
+    #        serv.advanceTurn()
+    #        # current player draws a card
+    #        self.state.currPlayer.hand.append(self.state.deck.draw())
+    #        # generate possible moves for current player
+    #        legalActions = serv.generateActions()
+    #        # send game state to all players
+    #        
+    #        # receive move from starting player
+    #       
+    #        # execute action on game state
+    #        if action in legalActions:
+    #            serv.executeAction()
+    #        else:
+    #            raise Exception('illegal action')
+    #        # check if the game is over
+    #        serv.checkGameOver()
         # figure out winner
                         
     # calculate total scores/stats
 
-    s.close()
 
 if __name__ == "__main__":
     main()
