@@ -10,41 +10,57 @@ from action import *
 class GameServer(object):
 
     def __init__(self):
-        self.state = GameState()
         self.sockets = {}
         return
 
     def getConnections(self, sock, playnum):
-        # get connections and create all Players
-        for i in range(playnum):
+        # wait for connections
+        for n in range(playnum):
             conn, addr = sock.accept()
             name = conn.recv(1024)
             self.sockets[name] = conn
-            self.state.players.append(Player(name))
         return
 
-    def startGame(self):
-        # generate the initial state of the game
+    def newGame(self):
+        # start a new game
+        self.state = GameState()
         self.state.deck = Deck()
-        for player in self.state.players:
-            player.hand = [self.state.deck.draw()]
-        self.currentPlayer = self.state.players[0]
-        self.currentPlayer.isMyTurn = True
+        for name in self.sockets.keys():
+            newPlayer = Player(name)
+            newPlayer.hand.append(self.state.deck.draw())
+            self.state.players.append(newPlayer)
+        self.currPlayer = self.state.players[0]
+        self.currPlayer.isMyTurn = True
         return
 
-    def generateMoves(self):
-        #iterate through both cards in hand
-        #for each card, create tuples of (card name, target, guess)
-        #can't target handmaidens
-        #guess is only for guard
-        legalTargets
-        moves = []
-        for card in self.hands[self.startingPlayer]:
-            if card == 'Guard':
-                for 
+    def generateActions(self):
+        legalTargets = [p for p in self.state.players if p.isTargetable and p is not self.state.currentPlayer]
+        actions = []
+        hand = self.currentPlayer.hand
+        
+        if Deck.COUNTESS in hand:
+            actions.append(Action(self.currentPlayer, None, Deck.COUNTESS, None))
+        else:
+            if Deck.KING in hand:
+                for target in legalTargets:
+                    actions.append(Action(actor, target, Deck.KING, None))
+            elif Deck.PRINCE in hand:
+                for target in (legalTargets + [self.state.currentPlayer]):
+                    actions.append(Action(actor, target, Deck.PRINCE, None))
+        if Deck.HANDMAIDEN in hand:
+            actions.append(Action(self.currentPlayer, self.currentPlayer, Deck.HANDMAIDEN, None))
+        if Deck.BARON in hand:
+            for target in legalTargets:
+                actions.append(Action(actor, target, Deck.BARON, None))
+        if Deck.PRIEST in hand:
+            for target in legalTargets:
+                actions.append(Action(actor, target, Deck.PRIEST, None))
+        if Deck.GUARD in hand:
+            actions.append(Action(actor, target, Deck.GUARD, None))
+        return actions
+
 
     def executeAction(self, action):
-
         card = action.card
         actor = action.actor
         target = action.target
@@ -76,19 +92,37 @@ class GameServer(object):
                 actor.lose()
                 actor.discard.append(actor.hand)
         elif card == Deck.PRIEST: 
+            pass
         elif card == Deck.GUARD:
+            pass
         else:
             raise Exception('invalid action')
             
+    def advanceTurn(self):
+        # want the next player cyclically who is still alive
+        for i, player in enumerate(self.state.players):
+            if player.isMyTurn:
+                player.isMyTurn = False
+                while True:
+                    nextPlayer = self.state.players[(i+1) % len(self.state.players)]
+                    if nextPlayer.isAlive:
+                        nextPlayer.isMyturn = True
+                        nextPlayer.isTargetable = True
+                        self.state.currPlayer = nextPlayer
+                        break
+                break
+        return
 
-        
-                
-
+    def isGameOver(self):
+        if len(self.state.deck) == 0 or len([p for p in self.state.players if p.isAlive]) == 1:
+            return True
+        else:
+            return False 
 
 def main():
 
-    # initialize server
-    gs = GameServer()
+    # initialize the GameServer object
+    serv = GameServer()
 
     # prompt for player/round info
     numPlayers = input("Enter # of players: ")
@@ -100,42 +134,34 @@ def main():
     s.listen(4)
 
     # wait for player connections 
-    gs.getConnections(s, int(numPlayers))
+    serv.getConnections(s, int(numPlayers))
 
-    # initialize game state
-    gs.startGame()
-
-    #pickle.dump(gs, open('blah.p', 'wb'))
-    #s.send(
     for n in range(numRounds):
+        # start new game
+        serv.newGame(int(numPlayers))
         # enter game loop
         while not self.state.gameOver:
-            #starting player draw a card
-            self.state.currentPlayer.hand.append(self.state.deck.draw())
-            #generate possible moves for starting player
-            gs.generateActions()
-            #send game state to all players
+            # current player draws a card
+            self.state.currPlayer.hand.append(self.state.deck.draw())
+            # generate possible moves for current player
+            legalActions = serv.generateActions()
+            # send game state to all players
             
-            #receive move from starting player
-            
-            #execute action on game state
+            # receive move from starting player
+           
+            # execute action on game state
             if action in legalActions:
-                gs.executeAction()
-            #check if game is over
-            if len(self.state.deck) == 0 or self.state.alivePlayers == 1
+                serv.executeAction()
+            else:
+                raise Exception('illegal action')
+            # check if the game is over
+            if serv.isGameOver():
                 self.state.gameOver = True
             else:
-            #rotate starting player
-                if self.state.players[-1].isMyTurn:
-                    self.state.players[-1].isMyTurn = False
-                    self.state.players[0].isMyTurn = True
-                    self.state.currentPlayer = self.state.players[0]
-                else:
-                    for player in self.state.players:
-                        if 
+                # rotate starting player
+                serv.advanceTurn()
         # figure out winner
-
-                
+                        
     # calculate total scores/stats
 
     s.close()
