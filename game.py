@@ -3,12 +3,9 @@ import sys
 import random
 import pickle
 import itertools
-from gamestate import *
 from player import *
 from deck import *
-from action import *
-from game import *
-from deck import *
+from gamestate import *
 
 class Game(object):
 
@@ -19,20 +16,21 @@ class Game(object):
 
         # create players
         self.players = []
-        for order, name in enumerate(self.server.sockets.keys()):
+        for name in self.server.sockets.keys():
             newPlayer = Player(name)
             self.players.append(newPlayer)
-            drawCard(newPlayer)
+            self.drawCard(newPlayer)
 
         # set starting player
         self.it = itertools.cycle(self.players)
         self.currPlayer = self.it.next()
         self.currPlayer.isMyTurn = True
+        self.currAction = None
         return
 
     def gameOver(self):
-        return len(self.state.deck) == 0 or \
-            len([p for p in self.state.players if p.isAlive]) == 1:
+        return len(self.deck.cards) == 0 or \
+            len([p for p in self.players if p.isAlive]) == 1
 
     def drawCard(self, player):
         player.hand.append(self.deck.draw())
@@ -48,31 +46,29 @@ class Game(object):
         self.currPlayer = nextPlayer
         return
 
-
-
-
-
     def generateActions(self, actor):
+        #TODO change the action tuple order to (card, actor, target, guess)
+        # also change it for executeActions
         actions = []
         hand = actor.hand
 
         if Deck.COUNTESS in hand:
-            actions.append( (actor, None, Deck.COUNTESS) )
+            actions.append((actor, None, Deck.COUNTESS))
         else:
             if Deck.KING in hand:
-                actions += allTargetActions(actor, Deck.KING)
-            elif Deck.PRINCE in hand
-                actions += allTargetActions(actor, Deck.PRINCE)
+                actions += self.allTargetActions(actor, Deck.KING)
+            elif Deck.PRINCE in hand:
+                actions += self.allTargetActions(actor, Deck.PRINCE)
 
         if Deck.HANDMAIDEN in hand:
-            actions.append( (actor, actor, Deck.HANDMAIDEN) )
+            actions.append((actor, actor, Deck.HANDMAIDEN))
         if Deck.BARON in hand:
-            actions += allTargetActions(actor, Deck.BARON)
+            actions += self.allTargetActions(actor, Deck.BARON)
         if Deck.PRIEST in hand:
-            actions += allTargetActions(actor, Deck.PRIEST)
+            actions += self.allTargetActions(actor, Deck.PRIEST)
 
         if Deck.GUARD in hand:
-            actions += allTargetActions(actor, Deck.GUARD)
+            actions += self.allTargetActions(actor, Deck.GUARD)
 
         # If no actions available, but have a targeting card in hand
         targetingCards = [Deck.KING, Deck.PRINCE, Deck.BARON, Deck.PRIEST, Deck.GUARD]
@@ -80,9 +76,9 @@ class Game(object):
 
         if len(actions) == 0:
             if hand[0] == Deck.PRINCESS:
-                return allTargetActions(actor, hand[1])
+                return self.allTargetActions(actor, hand[1])
             else:
-                return allTargetActions(actor, hand[0])
+                return self.allTargetActions(actor, hand[0])
 
         return actions
 
@@ -100,21 +96,67 @@ class Game(object):
 
         return actions
 
+    def executeAction(self, action):
+        # assuming action is a 4-tuple
+        # TODO really need to rewrite this
+        actor = action[0]
+        target = action[1]
+        card = action[2]
+        if len(action) > 3:
+            guess = action[3]
+            
+        if card == Deck.PRINCESS:
+            raise Exception('cannot play princess')
+        elif card == Deck.COUNTESS:      
+            pass
+        elif card == Deck.KING:       
+            if target is not None:
+                temp = actor.hand
+                actor.hand = target.hand
+                target.hand = temp
+        elif card == Deck.PRINCE:    
+            if Deck.PRINCESS in target.hand:
+                #target.lose()
+                target.discard.append(target.hand)
+            else:
+                target.discard.append(target.hand)
+                target.hand.append(self.deck.draw())
+        elif card == Deck.HANDMAIDEN:   
+            actor.isTargetable = False
+        elif card == Deck.BARON: 
+            if actor.hand > target.hand:
+                #target.lose()
+                target.discard.append(target.hand)
+            elif actor.hand < target.hand:
+                #actor.lose()
+                actor.discard.append(actor.hand)
+        elif card == Deck.PRIEST: 
+            pass
+        elif card == Deck.GUARD:
+            if guess in target.hand:
+                #target.lose()
+                target.discard.append(target.hand)
+        else:
+            raise Exception('invalid action')
 
-    def run(self):
-
-        while not gameOver():
-            # starting player draws a card
-            drawCard(currPlayer)
-
-            self.legalActions = generateActions(self.currPlayer)
-            self.currAction = self.server.sendGame(self)
-            while self.currAction not in self.legalActions:
-                self.currAction = self.server.sendGame(self)
-
-            executeAction(self.currAction)
-
-            nextTurn()
         return
 
+    def run(self):
+        while not self.gameOver():
+            # starting player draws a card
+            self.drawCard(self.currPlayer)
 
+            self.legalActions = self.generateActions(self.currPlayer)
+            print self.legalActions
+            currState = GameState(self.deck, self.players, \
+                        self.currPlayer, self.legalActions, self.currAction)
+            self.currAction = self.server.sendGame(currState)
+            print self.currAction
+            print self.currAction in self.legalActions
+            while self.currAction not in self.legalActions:
+                self.currAction = self.server.sendGame(currState)
+
+            self.executeAction(self.currAction)
+
+            self.nextTurn()
+        return

@@ -8,3 +8,6 @@ class Player:
         self.hand = []
         self.discard = []
         return
+        
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
