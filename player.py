@@ -17,11 +17,15 @@ class Player:
         self.hand.append(deck.draw())
         return
 
-    def playCard(self, card):
+    def playCard(self, card=0):
         """ remove card from hand and add to discard
-            !!will break if card not in hand """
-        self.hand.remove(card)
-        self.discard.append(card)
+            !!will break if card > 0 and not in hand """
+        if card in hand:
+            self.hand.remove(card)
+            self.discard.append(card)
+        else:
+            # no-argument call to function (card == 0)
+            self.discard.append(hand.pop())
         return
 
     def loseGame(self):

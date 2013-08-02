@@ -47,6 +47,7 @@ class Game(object):
         if Deck.COUNTESS in hand:
             actions.append( (Deck.COUNTESS, actor, None, None) )
         else:
+            # you may only play a KING or PRINCE with no COUNTESS in hand
             if Deck.KING in hand:
                 actions += self.allTargetActions(Deck.KING, actor)
             elif Deck.PRINCE in hand:
@@ -54,13 +55,11 @@ class Game(object):
 
         if Deck.HANDMAIDEN in hand:
             actions.append( (Deck.HANDMAIDEN, actor, actor, None) )
-        if Deck.BARON in hand:
-            actions += self.allTargetActions(Deck.BARON, actor)
-        if Deck.PRIEST in hand:
-            actions += self.allTargetActions(Deck.PRIEST, actor)
 
-        if Deck.GUARD in hand:
-            actions += self.allTargetActions(Deck.GUARD, actor)
+        # BARON, PRIEST, GUARD are all targeting cards
+        for card in (Deck.BARON, Deck.PRIEST, Deck.GUARD):
+            if card in hand:
+                actions += self.allTargetActions(card, actor)
 
         # if no actions available, you must use your card(s) to target None
         # note: if GUARD is used to target None, guess is irrelevant
@@ -72,6 +71,7 @@ class Game(object):
 
 
     def allTargetActions(self, card, actor):
+        """ get all target(ing) actions for targeting card 'card' """
         targets = [p for p in self.players if p.targetable and p is not actor]
 
         if card == Deck.GUARD:
@@ -91,7 +91,10 @@ class Game(object):
         card, actor, target, guess = action
         actor.playCard(card)
 
-        if card == Deck.KING and target is not None:
+        if card == Deck.COUNTESS:
+            pass
+
+        elif card == Deck.KING and target is not None:
             actor.hand, target.hand = target.hand, actor.hand
 
         # target is not None check unnecessary: PRINCE always has target
@@ -110,7 +113,7 @@ class Game(object):
         elif card == Deck.BARON:
             if actor.hand[0] > target.hand[0]:
                 target.loseGame()
-            elif actor.hand < target.hand:
+            elif actor.hand[0] < target.hand[0]:
                 actor.loseGame()
 
         elif card == Deck.PRIEST and target is not None:
@@ -127,9 +130,12 @@ class Game(object):
             # starting player draws a card
             self.currPlayer.drawCard(self.deck)
 
+            # generate legalActions and package into GameState 'currState'
             self.legalActions = self.generateActions(self.currPlayer)
             currState = GameState(self.deck, self.players, self.currPlayer, \
                                 self.legalActions, self.currAction, False)
+
+            # retrieve currPlayer's selected currAction based on currState
             self.currAction = self.server.sendState(currState)
             while self.currAction not in self.legalActions:
                 self.currAction = self.server.sendState(currState)
@@ -137,9 +143,15 @@ class Game(object):
             self.executeAction(self.currAction)
 
             self.nextTurn()
-        
+
+        # TODO: determine winner
+        #       let winner of last game go first for next game?
+        #       (optional startingPlayer parameter passed into __init__?)
+        #       (possible problems with player comparison __eq__)
+
         # pass final state to players
         finalState = GameState(self.deck, self.players, None, \
                                 [], self.currAction, True)
+
         self.server.sendState(finalState)
         return
