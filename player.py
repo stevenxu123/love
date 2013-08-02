@@ -2,12 +2,8 @@ class Player:
 
     def __init__(self, name):
         self.name = name
-        #TODO: remove isMyTurn
-        # (no longer necessary because GameState stores currPlayer)
-        # already removed in game.py
-        self.isMyTurn = False
-        self.isAlive = True
-        self.isTargetable = True
+        self.alive = True
+        self.targetable = True
         self.hand = []
         self.discard = []
         self.peekCard = None
@@ -21,7 +17,7 @@ class Player:
         self.hand.append(deck.draw())
         return
 
-    def playCard(self, card=self.hand[0]):
+    def playCard(self, card):
         """ remove card from hand and add to discard
             !!will break if card not in hand """
         self.hand.remove(card)
@@ -29,9 +25,9 @@ class Player:
         return
 
     def loseGame(self):
-        # ONLY set isAlive via loseGame
-        self.isAlive = False
-        self.isTargetable = False
+        # ONLY set alive via loseGame
+        self.alive = False
+        self.targetable = False
         self.discard += self.hand
         del self.hand[:]
         return

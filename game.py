@@ -29,14 +29,14 @@ class Game(object):
 
     def gameOver(self):
         return not self.deck.cards or \
-            len([p for p in self.players if p.isAlive]) == 1
+            len([p for p in self.players if p.alive]) == 1
 
     def nextTurn(self):
         nextPlayer = self.it.next()
         # gameOver prevents all players being dead
-        while not nextPlayer.isAlive:
+        while not nextPlayer.alive:
             nextPlayer = self.it.next()
-        nextPlayer.isTargetable = True
+        nextPlayer.targetable = True
         self.currPlayer = nextPlayer
         return
 
@@ -72,7 +72,7 @@ class Game(object):
 
 
     def allTargetActions(self, card, actor):
-        targets = [p for p in self.players if p.isTargetable and p is not actor]
+        targets = [p for p in self.players if p.targetable and p is not actor]
 
         if card == Deck.GUARD:
             return [(card, actor, target, guess) \
@@ -105,7 +105,7 @@ class Game(object):
 
         elif card == Deck.HANDMAIDEN:
             # target is actor, actor is target
-            target.isTargetable = False
+            target.targetable = False
 
         elif card == Deck.BARON:
             if actor.hand[0] > target.hand[0]:
@@ -128,16 +128,18 @@ class Game(object):
             self.currPlayer.drawCard(self.deck)
 
             self.legalActions = self.generateActions(self.currPlayer)
-            print self.legalActions
-            currState = GameState(self.deck, self.players, \
-                        self.currPlayer, self.legalActions, self.currAction)
-            self.currAction = self.server.sendGame(currState)
-            print self.currAction
-            print self.currAction in self.legalActions
+            currState = GameState(self.deck, self.players, self.currPlayer, \
+                                self.legalActions, self.currAction, False)
+            self.currAction = self.server.sendState(currState)
             while self.currAction not in self.legalActions:
-                self.currAction = self.server.sendGame(currState)
+                self.currAction = self.server.sendState(currState)
 
             self.executeAction(self.currAction)
 
             self.nextTurn()
+        
+        # pass final state to players
+        finalState = GameState(self.deck, self.players, None, \
+                                [], self.currAction, True)
+        self.server.sendState(finalState)
         return

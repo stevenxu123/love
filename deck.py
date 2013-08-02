@@ -12,6 +12,8 @@ class Deck(object):
     cardSet = range(GUARD, PRINCESS + 1)
     cardDist = [PRINCESS, COUNTESS, KING] + \
             [PRINCE, HANDMAIDEN, BARON, PRIEST]*2 + [GUARD]*5
+    cardNames = {8:"Princess", 7:"Countess", 6:"King", 5:"Prince", \
+                4:"Handmaiden", 3:"Baron", 2:"Priest", 1:"Guard"}
 
     def __init__(self):
         self.cards = Deck.cardDist[:]
@@ -21,15 +23,8 @@ class Deck(object):
 
     def draw(self):
         if not self.cards:
-            # proposal: return self.lastCard?
             # game should not be drawing after this
-            print 'last card drawn' #debug
+            print 'no more cards' #debug
             return self.lastCard
-#            if self.lastCard != 0:
-#                last = self.lastCard
-#                self.lastCard = 0
-#                return last
-#            else:
-#                raise Exception('no cards left in deck to draw')
         else:
             return self.cards.pop()

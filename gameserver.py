@@ -17,11 +17,14 @@ class GameServer(object):
             self.sockets[name] = conn
         return
 
-    def sendGame(self, game):
-        pickledGame = pickle.dumps(game)
-        for player in game.players:
-            self.sockets[player.name].send(pickledGame)
-        return pickle.loads(self.sockets[game.currPlayer.name].recv(1024))
+    def sendState(self, state):
+        pickledState = pickle.dumps(state)
+        for player in state.players:
+            self.sockets[player.name].send(pickledState)
+        if not state.gameOver:
+            return pickle.loads(self.sockets[state.currPlayer.name].recv(1024))
+        else:
+            return
         
 
 def main():
@@ -37,7 +40,7 @@ def main():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
     s.bind((socket.gethostname(), 8000))
-    s.listen(4)
+    s.listen(5)
 
     # wait for player connections 
     serv.getConnections(s, int(numPlayers))
@@ -48,7 +51,7 @@ def main():
         game.run()
     
     # close player sockets
-    for k,v in serv.sockets():
+    for v in serv.sockets.values():
         v.close()
 
     # close server socket
