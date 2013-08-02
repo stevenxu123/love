@@ -1,12 +1,8 @@
 import socket
-import sys
-import random
 import pickle
-from gamestate import *
-from player import *
-from deck import *
-from action import *
 from game import *
+from deck import *
+from player import *
 
 class GameServer(object):
 
@@ -14,9 +10,8 @@ class GameServer(object):
         self.sockets = {}
         return
 
-    def getConnections(self, sock, playnum):
-        # wait for connections
-        for n in range(playnum):
+    def getConnections(self, sock, numPlayers):
+        for n in range(numPlayers):
             conn, addr = sock.accept()
             name = conn.recv(1024)
             self.sockets[name] = conn
@@ -128,53 +123,14 @@ def main():
         game = Game(serv, numPlayers)
         game.run()
     
+    # close player sockets
     for k,v in serv.sockets():
         v.close()
 
+    # close server socket
     s.close()
 
     return
-
-
-
-
-
-
-
-    # testing pickling
-    serv.newGame()
-    print serv.state.deck.deck
-    print serv.sockets
-    #p = Deck()
-    #print p.deck
-    #serv.sockets['testbot3'].send(pickle.dumps(p))
-    serv.sockets['testbot3'].send(pickle.dumps(serv.state))
-
-    #for n in range(numRounds):
-    #    # start new game
-    #    serv.newGame(int(numPlayers))
-    #    # enter game loop
-    #    while not self.state.gameOver:
-    #        # rotate starting player
-    #        serv.advanceTurn()
-    #        # current player draws a card
-    #        self.state.currPlayer.hand.append(self.state.deck.draw())
-    #        # generate possible moves for current player
-    #        legalActions = serv.generateActions()
-    #        # send game state to all players
-    #        
-    #        # receive move from starting player
-    #       
-    #        # execute action on game state
-    #        if action in legalActions:
-    #            serv.executeAction()
-    #        else:
-    #            raise Exception('illegal action')
-    #        # check if the game is over
-    #        serv.checkGameOver()
-        # figure out winner
-                        
-    # calculate total scores/stats
 
 
 if __name__ == "__main__":
