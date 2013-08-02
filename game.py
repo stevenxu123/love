@@ -47,22 +47,74 @@ class Game(object):
         nextPlayer.isTargetable = True
         self.currPlayer = nextPlayer
         return
-        
-    
+
+
+
+
+
+    def generateActions(self, actor):
+        actions = []
+        hand = actor.hand
+
+        if Deck.COUNTESS in hand:
+            actions.append( (actor, None, Deck.COUNTESS) )
+        else:
+            if Deck.KING in hand:
+                actions += allTargetActions(actor, Deck.KING)
+            elif Deck.PRINCE in hand
+                actions += allTargetActions(actor, Deck.PRINCE)
+
+        if Deck.HANDMAIDEN in hand:
+            actions.append( (actor, actor, Deck.HANDMAIDEN) )
+        if Deck.BARON in hand:
+            actions += allTargetActions(actor, Deck.BARON)
+        if Deck.PRIEST in hand:
+            actions += allTargetActions(actor, Deck.PRIEST)
+
+        if Deck.GUARD in hand:
+            actions += allTargetActions(actor, Deck.GUARD)
+
+        # If no actions available, but have a targeting card in hand
+        targetingCards = [Deck.KING, Deck.PRINCE, Deck.BARON, Deck.PRIEST, Deck.GUARD]
+        hasTargetingCard = [card for card in Deck.cardSet if card in targetingCards]
+
+        if len(actions) == 0:
+            if hand[0] == Deck.PRINCESS:
+                return allTargetActions(actor, hand[1])
+            else:
+                return allTargetActions(actor, hand[0])
+
+        return actions
+
+
+    def allTargetActions(self, actor, card):
+        targets = [p for p in self.players if p.isTargetable and p is not actor]
+
+        if card == Deck.GUARD:
+            return [(actor, target, card, guess) \
+                    for target in targets for guess in range(Deck.PRIEST, Deck.PRINCESS+1)]
+
+        actions = [(actor, target, card) for target in targets]
+        if card == Deck.PRINCE:
+            actions.append( (actor, actor, card) )
+
+        return actions
+
+
     def run(self):
-        
+
         while not gameOver():
             # starting player draws a card
             drawCard(currPlayer)
 
-            legalActions = generateActions(self.currPlayer)
+            self.legalActions = generateActions(self.currPlayer)
             self.currAction = self.server.sendGame(self)
-            if self.currAction in legalActions:
-                executeAction(self.currAction)
-            else:
-                raise Exception('illegal action')
+            while self.currAction not in self.legalActions:
+                self.currAction = self.server.sendGame(self)
+
+            executeAction(self.currAction)
 
             nextTurn()
         return
 
-        
+
