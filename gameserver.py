@@ -22,6 +22,12 @@ class GameServer(object):
             self.sockets[name] = conn
         return
 
+    def sendGame(self, game):
+        pickledGame = pickle.dumps(game)
+        for player in game.players:
+            self.sockets[player.name].send(pickledGame)
+        return pickle.loads(self.sockets[game.currPlayer.name].recv(1024))
+        
     def generateActions(self):
         #TODO: make this nice and clean
         hand = self.currPlayer.hand
