@@ -20,7 +20,7 @@ class Player:
     def playCard(self, card=0):
         """ remove card from hand and add to discard
             !!will break if card > 0 and not in hand """
-        if card in hand:
+        if card in self.hand:
             self.hand.remove(card)
             self.discard.append(card)
         else:

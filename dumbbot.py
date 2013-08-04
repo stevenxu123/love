@@ -8,7 +8,7 @@ class DumbBot(object):
     def __init__(self):
         return
 
-    def makeMove(self, state):
+    def move(self, state):
         return state.legalActions[0]
 
 def main():
@@ -24,15 +24,24 @@ def main():
     s = socket(AF_INET, SOCK_STREAM)
     s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
     s.connect((addr, port))
-    print "connection established!"
 
+    # register name with server
     s.send(name)
+    mess = s.recv(1024)
+    while mess != name:
+        name = raw_input("Bot name already taken. Enter another name: ")
+        s.send(name)
+        mess = s.recv(1024)
 
-    state = pickle.loads(s.recv(1024))
-    while not state.gameOver:
-        if state.currPlayer.name == name:
-            s.send(pickle.dumps(bot.makeMove(state)))
-        state = pickls.loads(s.recv(1024))
+    # play games
+    rounds = s.recv(1024)
+    print rounds
+    for r in range(int(rounds)):
+        state = pickle.loads(s.recv(1024))
+        while not state.gameOver:
+            if state.currPlayer.name == name:
+                s.send(pickle.dumps(bot.move(state)))
+            state = pickle.loads(s.recv(1024))
 
     s.close()
     

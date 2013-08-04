@@ -10,13 +10,6 @@ class GameServer(object):
         self.sockets = {}
         return
 
-    def getConnections(self, sock, numPlayers):
-        for n in range(numPlayers):
-            conn, addr = sock.accept()
-            name = conn.recv(1024)
-            self.sockets[name] = conn
-        return
-
     def sendState(self, state):
         pickledState = pickle.dumps(state)
         for player in state.players:
@@ -43,10 +36,21 @@ def main():
     s.listen(5)
 
     # wait for player connections 
-    serv.getConnections(s, int(numPlayers))
-    print "connection received!"
+    for p in range(numPlayers):
+        conn, addr = s.accept()
+        name = conn.recv(1024)
+        print name
+        print serv.sockets
+        while name in serv.sockets:
+            conn.send("name already taken, try again")
+            name = conn.recv(1024)
+            print "new " + name
+        serv.sockets[name] = conn
+        conn.send(name)
+        conn.send(str(numRounds))
 
-    for n in range(numRounds):
+    # run games
+    for r in range(numRounds):
         game = Game(serv, numPlayers)
         game.run()
     
