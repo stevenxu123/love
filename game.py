@@ -91,14 +91,16 @@ class Game(object):
         card, actor, target, guess = action
         # make actor and target point to the right players in self.players
         actor = self.players[self.players.index(actor)]
-        if target is not None:
-            target = self.players[self.players.index(target)]
-
         actor.playCard(card)
+
+        if target is None:
+            return
+
+        target = self.players[self.players.index(target)]
 
         if card == Deck.COUNTESS:
             pass
-        elif card == Deck.KING and target is not None:
+        elif card == Deck.KING:
             actor.hand, target.hand = target.hand, actor.hand
         # target is not None check unnecessary: PRINCE always has target
         elif card == Deck.PRINCE:
@@ -117,9 +119,9 @@ class Game(object):
             elif actor.hand[0] < target.hand[0]:
                 actor.loseGame()
             # else: (tie) both players still alive
-        elif card == Deck.PRIEST and target is not None:
+        elif card == Deck.PRIEST:
             actor.peekCard = target.hand[0]
-        elif card == Deck.GUARD and target is not None:
+        elif card == Deck.GUARD:
             if guess in target.hand:
                 target.loseGame()
         return

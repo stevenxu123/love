@@ -1,3 +1,4 @@
+from deck import *
 
 class GameState(object):
 
@@ -15,9 +16,9 @@ class GameState(object):
     def printField(self):
         """Print field: public game information known to all players"""
         print "#"*40
-        print "cards left in deck:", "[]"*len(self.deck.cards)
-        print "last action played:", actionString(self.currAction)
-        print actionSentence(self.currAction)
+        print "cards left in deck:", "[]"*len(self.deck.cards), len(self.deck.cards)
+        print "last action played:", self.actionString(self.currAction)
+        print self.actionSentence(self.currAction)
         print "#"*40
         print "="*40
 
@@ -47,23 +48,29 @@ class GameState(object):
             return "([%s] %s >> %s, guess: %s)" % \
                     (Deck.cardNames[card], actor.name, target.name, \
                      Deck.cardNames[card])
-        else:
+        elif target is not None:
             return "([%s] %s >> %s)" % \
                     (Deck.cardNames[card], actor.name, target.name)
+        else:
+            return "([%s] %s >> %s)" % \
+                    (Deck.cardNames[card], actor.name, None)
 
     def actionSentence(self, action):
         if action is None:
             return ""
 
         card, actor, target, guess = action
-        if guess is not None:
+        if guess:
             return "%s played a %s and guessed %s's hand (for a %s)" % \
                     (actor.name, Deck.cardNames[card], target.name, \
                      Deck.cardNames[guess])
-        elif target is not None:
+        elif target:
             return "%s played a %s and %s" % \
                     (actor.name, Deck.cardNames[card],
-                     effectString(card, target.name))
+                     self.effectString(card, target.name))
+        else:
+            return "%s played a %s and nothing happened" % \
+                    (actor.name, Deck.cardNames[card])
 
     def effectString(self, card, targetName):
         if card == Deck.KING:

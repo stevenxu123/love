@@ -1,3 +1,5 @@
+from deck import *
+
 class Player:
 
     def __init__(self, name):
@@ -10,7 +12,7 @@ class Player:
         return
 
     def __eq__(self, other):
-        return self.__dict__ == other.__dict__
+        return isinstance(other, Player) and self.name == other.name
 
     def __str__(self):
         return str(self.__dict__)
@@ -31,7 +33,7 @@ class Player:
             self.discard.append(card)
         else:
             # no-argument call to function (card == 0)
-            self.discard.append(hand.pop())
+            self.discard.append(self.hand.pop())
         return
 
     def loseGame(self):
@@ -53,6 +55,7 @@ class Player:
 #        if not self.alive:
 #            return
         print "targetable: ", self.targetable
-        print "your hand:  ", [Deck.cardName[card] for card in self.hand]
-        print "peek card:  ", Deck.cardName[self.peekCard]
+        print "your hand:  ", [Deck.cardNames[card] for card in self.hand]
+        if self.peekCard:
+            print "peek card:  ", Deck.cardNames[self.peekCard]
         print "#"*40
