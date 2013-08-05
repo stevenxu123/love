@@ -1,5 +1,6 @@
-import socket
 import pickle
+import sys
+from socket import *
 from game import *
 from deck import *
 from player import *
@@ -11,9 +12,8 @@ class GameServer(object):
         return
 
     def sendState(self, state):
-        pickledState = pickle.dumps(state)
         for player in state.players:
-            self.sockets[player.name].send(pickledState)
+            self.sockets[player.name].send(pickle.dumps(state))
         if not state.gameOver:
             return pickle.loads(self.sockets[state.currPlayer.name].recv(1024))
         else:
@@ -26,27 +26,27 @@ def main():
     serv = GameServer()
 
     # prompt for player/round info
-    numPlayers = input("Enter # of players: ")
-    numRounds = input("Enter # of rounds: ")
+    if len(sys.argv) == 3:
+        numPlayers = int(sys.argv[1])
+        numRounds = int(sys.argv[2])
+    else:
+        numPlayers = int(input("Enter # of players: "))
+        numRounds = int(input("Enter # of rounds: "))
 
     # setting up server socket
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
-    s.bind((socket.gethostname(), 8000))
+    s = socket.socket(AF_INET, SOCK_STREAM)
+    s.setsockopt(SOL_SOCKET, SO_REUSEADDR,1)
+    s.bind((gethostname(), 8000))
     s.listen(5)
 
     # wait for player connections
     for p in range(numPlayers):
         conn, addr = s.accept()
         name = conn.recv(1024)
-        print name
-        print serv.sockets
-        while name in serv.sockets:
-            conn.send("name already taken, try again")
-            name = conn.recv(1024)
-            print "new " + name
         serv.sockets[name] = conn
-        conn.send(name)
+        conn.send(str(numRounds))
+        message = conn.recv(1024)
+        print message
 
     # run games
     for r in range(numRounds):
