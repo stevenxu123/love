@@ -29,7 +29,7 @@ class Game(object):
 
     def gameOver(self):
         return not self.deck.cards or \
-            len([p for p in self.players if p.alive]) == 1
+               len([p for p in self.players if p.alive]) == 1
 
     def nextTurn(self):
         nextPlayer = self.it.next()
@@ -65,14 +65,14 @@ class Game(object):
         # note: if GUARD is used to target None, guess is irrelevant
         if not actions:
             return [(card, actor, None, None) \
-                    for card in hand if card is not Deck.PRINCESS]
+                    for card in hand if card != Deck.PRINCESS]
         else:
             return actions
 
 
     def allTargetActions(self, card, actor):
         """ get all target(ing) actions for targeting card 'card' """
-        targets = [p for p in self.players if p.targetable and p is not actor]
+        targets = [p for p in self.players if p.targetable and p != actor]
 
         if card == Deck.GUARD:
             return [(card, actor, target, guess) \
@@ -89,14 +89,17 @@ class Game(object):
     def executeAction(self, action):
         # assume action is legal
         card, actor, target, guess = action
+        # make actor and target point to the right players in self.players
+        actor = self.players[self.players.index(actor)]
+        if target is not None:
+            target = self.players[self.players.index(target)]
+
         actor.playCard(card)
 
         if card == Deck.COUNTESS:
             pass
-
         elif card == Deck.KING and target is not None:
             actor.hand, target.hand = target.hand, actor.hand
-
         # target is not None check unnecessary: PRINCE always has target
         elif card == Deck.PRINCE:
             if Deck.PRINCESS in target.hand:
@@ -105,24 +108,20 @@ class Game(object):
                 # assumes target has 1 card in hand
                 target.playCard()
                 target.drawCard(self.deck)
-
         elif card == Deck.HANDMAIDEN:
-            # target is actor, actor is target
+            # should be true: target is actor
             target.targetable = False
-
         elif card == Deck.BARON:
             if actor.hand[0] > target.hand[0]:
                 target.loseGame()
             elif actor.hand[0] < target.hand[0]:
                 actor.loseGame()
-
+            # else: (tie) both players still alive
         elif card == Deck.PRIEST and target is not None:
             actor.peekCard = target.hand[0]
-
         elif card == Deck.GUARD and target is not None:
             if guess in target.hand:
                 target.loseGame()
-
         return
 
     def run(self):
@@ -133,7 +132,7 @@ class Game(object):
             # generate legalActions and package into GameState 'currState'
             self.legalActions = self.generateActions(self.currPlayer)
             currState = GameState(self.deck, self.players, self.currPlayer, \
-                                self.legalActions, self.currAction, False)
+                                  self.legalActions, self.currAction, False)
 
             # retrieve currPlayer's selected currAction based on currState
             self.currAction = self.server.sendState(currState)
@@ -144,14 +143,16 @@ class Game(object):
 
             self.nextTurn()
 
-        # TODO: determine winner
-        #       let winner of last game go first for next game?
-        #       (optional startingPlayer parameter passed into __init__?)
-        #       (possible problems with player comparison __eq__)
+        maxCard = max(p.hand[0] for p in self.players if p.alive)
+        for p in self.players:
+            if p.alive and p.hand[0] < maxCard:
+                p.loseGame()
 
+        # doesn't handle case of tie; just chooses self.currPlayer to win
+        self.nextTurn()
         # pass final state to players
-        finalState = GameState(self.deck, self.players, None, \
-                                [], self.currAction, True)
+        finalState = GameState(self.deck, self.players, self.currPlayer, \
+                               [], self.currAction, True)
 
         self.server.sendState(finalState)
         return

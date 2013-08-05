@@ -38,6 +38,9 @@ class GameState(object):
         return
 
     def actionString(self, action):
+        if action is None:
+            return ""
+
         card, actor, target, guess = action
 
         if guess is not None:
@@ -49,7 +52,7 @@ class GameState(object):
                     (Deck.cardNames[card], actor.name, target.name)
 
     def actionSentence(self, action):
-        if not action:
+        if action is None:
             return ""
 
         card, actor, target, guess = action
