@@ -1,6 +1,6 @@
 import pickle
+import socket
 import sys
-from socket import *
 from game import *
 from deck import *
 from player import *
@@ -13,11 +13,9 @@ class GameServer(object):
 
     def sendState(self, state):
         for player in state.players:
-            msg = pickle.dumps(state, pickle.HIGHEST_PROTOCOL)
-            self.sockets[player.name].send(msg)
+            self.sockets[player.name].send(pickle.dumps(state, pickle.HIGHEST_PROTOCOL))
         if not state.gameOver:
-            msg = self.sockets[state.currPlayer.name].recv(1024)
-            return pickle.loads(msg)
+            return pickle.loads(self.sockets[state.currPlayer.name].recv(1024))
         else:
             return
 
@@ -36,9 +34,9 @@ def main():
         numRounds = int(input("Enter # of rounds: "))
 
     # setting up server socket
-    s = socket.socket(AF_INET, SOCK_STREAM)
-    s.setsockopt(SOL_SOCKET, SO_REUSEADDR,1)
-    s.bind((gethostname(), 8000))
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
+    s.bind((socket.gethostname(), 8000))
     s.listen(5)
 
     # wait for player connections

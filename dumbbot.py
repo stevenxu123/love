@@ -1,6 +1,6 @@
 import pickle
 import sys
-from socket import *
+import socket
 from deck import *
 from gamestate import *
 
@@ -29,14 +29,14 @@ def main():
         name = raw_input("Enter bot name: ")
 
     # set up socket connection
-    s = socket(AF_INET, SOCK_STREAM)
-    s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.connect((addr, port))
 
     # send name, get rounds
     s.send(name)
     numRounds = int(s.recv(1024))
-    s.send("all set!")
+    s.send(name + " is all set!")
 
     # play games
     for r in range(numRounds):
@@ -52,8 +52,7 @@ def main():
             if state.currPlayer.name == name:
                 s.send(pickle.dumps(bot.move(state), pickle.HIGHEST_PROTOCOL))
 
-            msg = s.recv(1024)
-            state = pickle.loads(msg)
+            state = pickle.loads(s.recv(1024))
 
         state.printField()
         for player in state.players:

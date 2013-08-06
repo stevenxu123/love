@@ -141,8 +141,20 @@ class Game(object):
             while self.currAction not in self.legalActions:
                 self.currAction = self.server.sendState(currState)
 
+            # execute the selected action
             self.executeAction(self.currAction)
 
+            # replace old Players in currAction with ones after execution
+            actor = self.currAction[1]
+            target = self.currAction[2]
+            for player in self.players:
+                if player == actor:
+                    actor = player
+                if player == target:
+                    target = player
+            self.currAction = (self.currAction[0], actor, target, self.currAction[3])
+
+            # advance to the next turn
             self.nextTurn()
 
         maxCard = max(p.hand[0] for p in self.players if p.alive)
