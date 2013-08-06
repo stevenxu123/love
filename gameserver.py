@@ -13,9 +13,11 @@ class GameServer(object):
 
     def sendState(self, state):
         for player in state.players:
-            self.sockets[player.name].send(pickle.dumps(state))
+            msg = pickle.dumps(state, pickle.HIGHEST_PROTOCOL)
+            self.sockets[player.name].send(msg)
         if not state.gameOver:
-            return pickle.loads(self.sockets[state.currPlayer.name].recv(1024))
+            msg = self.sockets[state.currPlayer.name].recv(1024)
+            return pickle.loads(msg)
         else:
             return
 

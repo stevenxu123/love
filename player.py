@@ -22,8 +22,6 @@ class Player:
         self.hand.append(deck.draw())
         return
 
-#    not sure if this would work...
-#    def playCard(self, card=self.hand[0]):
     def playCard(self, card=0):
         """Remove card from hand and add to discard
            !!will break if card not in hand
@@ -46,15 +44,3 @@ class Player:
         self.discard += self.hand
         del self.hand[:]
         return
-
-    def printPlayerInfo(self):
-        """Print human-readable list of attributes for this player"""
-        print "-"*50
-        print "your name:  ", self.name
-        print "your status:", ("alive!" if self.alive else "dead")
-#        if not self.alive:
-#            return
-        print "targetable: ", self.targetable
-        print "your hand:  ", [Deck.cardNames[card] for card in self.hand]
-        if self.peekCard:
-            print "peek card:  ", Deck.cardNames[self.peekCard]

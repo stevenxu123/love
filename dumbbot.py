@@ -43,18 +43,24 @@ def main():
         state = pickle.loads(s.recv(1024))
         while not state.gameOver:
             state.printField()
-            # print myPlayer's information
-            myPlayer = None
+            # print bot's player's information
             for player in state.players:
                 if player.name == name:
-                    myPlayer = player
+                    state.printPlayer(player)
                     break
-            if myPlayer:
-                myPlayer.printPlayerInfo()
 
             if state.currPlayer.name == name:
-                s.send(pickle.dumps(bot.move(state)))
-            state = pickle.loads(s.recv(1024))
+                s.send(pickle.dumps(bot.move(state), pickle.HIGHEST_PROTOCOL))
+
+            msg = s.recv(1024)
+            state = pickle.loads(msg)
+
+        state.printField()
+        for player in state.players:
+            if player.name == name:
+                state.printPlayer(player, gameOver=True)
+                break
+
 
     # close bot socket
     s.close()
