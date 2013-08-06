@@ -15,12 +15,10 @@ class GameState(object):
 
     def printField(self):
         """Print field: public game information known to all players"""
-        print "#"*40
+        print "#"*50
         print "cards left in deck:", "[]"*len(self.deck.cards), len(self.deck.cards)
-        print "last action played:", self.actionString(self.currAction)
         print self.actionSentence(self.currAction)
-        print "#"*40
-        print "="*40
+        print
 
         # print each player's discards and status information
         for player in self.players:
@@ -33,9 +31,8 @@ class GameState(object):
             else:
                 print "[]   ", player.name
 
-            print "-"*40
-            print "discard:", [Deck.cardNames[card] for card in player.discard]
-            print "="*40
+            print "disc:", [Deck.cardNames[card] for card in player.discard]
+            print
         return
 
     def actionString(self, action):
@@ -74,7 +71,7 @@ class GameState(object):
 
     def effectString(self, card, targetName):
         if card == Deck.KING:
-            return "swapped hands with", targetName
+            return "swapped hands with " + targetName
         elif card == Deck.PRINCE:
             return "forced %s to discard and draw a new card" % (targetName,)
         elif card == Deck.HANDMAIDEN:

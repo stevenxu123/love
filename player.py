@@ -49,7 +49,7 @@ class Player:
 
     def printPlayerInfo(self):
         """Print human-readable list of attributes for this player"""
-        print "#"*40
+        print "-"*50
         print "your name:  ", self.name
         print "your status:", ("alive!" if self.alive else "dead")
 #        if not self.alive:
@@ -58,4 +58,3 @@ class Player:
         print "your hand:  ", [Deck.cardNames[card] for card in self.hand]
         if self.peekCard:
             print "peek card:  ", Deck.cardNames[self.peekCard]
-        print "#"*40

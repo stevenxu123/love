@@ -43,8 +43,16 @@ def main():
         state = pickle.loads(s.recv(1024))
         while not state.gameOver:
             state.printField()
+            # print myPlayer's information
+            myPlayer = None
+            for player in state.players:
+                if player.name == name:
+                    myPlayer = player
+                    break
+            if myPlayer:
+                myPlayer.printPlayerInfo()
+
             if state.currPlayer.name == name:
-                state.currPlayer.printPlayerInfo()
                 s.send(pickle.dumps(bot.move(state)))
             state = pickle.loads(s.recv(1024))
 
