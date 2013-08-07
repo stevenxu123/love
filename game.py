@@ -94,6 +94,7 @@ class Game(object):
         actor.playCard(card)
 
         if target is None:
+            self.currAction = (card, actor, target, guess)
             return
 
         target = self.players[self.players.index(target)]
@@ -124,6 +125,7 @@ class Game(object):
         elif card == Deck.GUARD:
             if guess in target.hand:
                 target.loseGame()
+        self.currAction = (card, actor, target, guess)
         return
 
     def run(self):
@@ -137,36 +139,44 @@ class Game(object):
                                   self.legalActions, self.currAction, False)
 
             # retrieve currPlayer's selected currAction based on currState
-            self.currAction = self.server.sendState(currState)
-            while self.currAction not in self.legalActions:
-                self.currAction = self.server.sendState(currState)
+            action = self.server.sendState(currState)
+            while action not in self.legalActions:
+                action = self.server.sendState(currState)
 
             # execute the selected action
-            self.executeAction(self.currAction)
+            self.executeAction(action)
 
             # replace old Players in currAction with ones after execution
-            actor = self.currAction[1]
-            target = self.currAction[2]
-            for player in self.players:
-                if player == actor:
-                    actor = player
-                if player == target:
-                    target = player
-            self.currAction = (self.currAction[0], actor, target, self.currAction[3])
+            #actor = self.players[self.players.index(self.currAction[1])]
+            #if self.currAction[2] is None:
+            #    target = None
+            #else:
+            #    target = self.players[self.players.index(self.currAction[2])]
+            #self.currAction = (self.currAction[0], actor, target, self.currAction[3])
 
             # advance to the next turn
             self.nextTurn()
 
+        
         maxCard = max(p.hand[0] for p in self.players if p.alive)
-        for p in self.players:
-            if p.alive and p.hand[0] < maxCard:
-                p.loseGame()
+        winners = [p for p in self.players if p.alive and p.hand[0] == maxCard]
+        if len(winners) > 1:
+            maxLen = max(len(p.discard) for p in self.players if p.alive)
+            for w in winners:
+                if len(w.discard) != maxLen:
+                    # for now, a tie on the tiebreak gives points to both players
+                    winners.remove(w)
+        for w in winners:
+            w.win = True
 
         # pass final state to players
+        for p in self.players:
+            if p.alive:
+                p.playCard()
         finalState = GameState(self.deck, self.players, None, \
                                [], self.currAction, True)
 
         self.server.sendState(finalState)
 
         # return winners
-        return [p for p in self.players if p.alive] 
+        return winners 

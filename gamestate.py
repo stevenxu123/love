@@ -87,7 +87,7 @@ class GameState(object):
         print "-"*50
         print "your name:  ", player.name
         if self.gameOver:
-            if player.alive:
+            if player.win:
                 print "your status: \(^-^)/"
                 print "YOU WON! YOU ARE THE VERY BEST THAT NO ONE EVER WAS!!"
             else:

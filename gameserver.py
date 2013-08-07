@@ -56,6 +56,9 @@ def main():
         winners = game.run()
         for w in winners:
             serv.scores[w.name] += 1
+        print "scores after Game #%d:" % (r+1,)
+        for k,v in serv.scores.items():
+            print "  %s has %d points" % (k,v)
 
     # close player sockets
     for v in serv.sockets.values():

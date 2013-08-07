@@ -9,6 +9,7 @@ class Player:
         self.hand = []
         self.discard = []
         self.peekCard = None
+        self.win = False
         return
 
     def __eq__(self, other):
