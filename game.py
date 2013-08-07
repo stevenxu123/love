@@ -162,11 +162,11 @@ class Game(object):
             if p.alive and p.hand[0] < maxCard:
                 p.loseGame()
 
-        # doesn't handle case of tie; just chooses self.currPlayer to win
-        self.nextTurn()
         # pass final state to players
-        finalState = GameState(self.deck, self.players, self.currPlayer, \
+        finalState = GameState(self.deck, self.players, None, \
                                [], self.currAction, True)
 
         self.server.sendState(finalState)
-        return
+
+        # return winners
+        return [p for p in self.players if p.alive] 

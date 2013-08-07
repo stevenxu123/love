@@ -14,7 +14,7 @@ class GameState(object):
         return str(self.__dict__)
 
     def printField(self):
-        """Print human-readable list of public game information"""
+        """Print human-readable layout of public game information"""
         print "="*50
 
         # print what happened on the previous turn
@@ -82,31 +82,33 @@ class GameState(object):
             result = "nothing happened"
         return "%s played %s and %s" % (actor.name, Deck.cardNames[card], result)
 
-    def printPlayer(self, player, gameOver=False):
+    def printPlayer(self, player ):
         """Print human-readable list of attributes for this player"""
         print "-"*50
         print "your name:  ", player.name
-        if not player.alive:
-            if not gameOver:
-                print "your status:  (x_x\")"
+        if self.gameOver:
+            if player.alive:
+                print "your status: \(^-^)/"
+                print "YOU WON! YOU ARE THE VERY BEST THAT NO ONE EVER WAS!!"
             else:
                 print "your status:  (T_T\")"
                 print "You lost! You have brought dishonor upon yourself."
-                print "\n", "GG "*6, "GOOD GAME ", "GG "*7
-            return
-        elif gameOver:
-            print "your status: \(^-^)/"
-            print "YOU WON! YOU ARE THE VERY BEST THAT NO ONE EVER WAS!!"
             print "\n", "GG "*6, "GOOD GAME ", "GG "*7
+            return
+        elif not player.alive:
+            print "your status:  (x_x\") RIP"
             return
         elif player == self.currPlayer:
             print "your status: <(._.<) it's your turn!"
         elif not player.targetable:
             print "your status: \(._.)/ can't touch this"
         else:
-            print "your status:  (-_- )"
+            print "your status:  (-_- ) ... ... ..."
 
-        print "your hand:  ", [Deck.cardNames[card] for card in player.hand]
+        hand = ""
+        for card in player.hand:
+            hand += "[" + Deck.cardNames[card] + "]"
+        print "your hand:  ", hand
         if player.peekCard:
             print "peek card:  ", Deck.cardNames[player.peekCard]
         print

@@ -57,7 +57,7 @@ def main():
         state.printField()
         for player in state.players:
             if player.name == name:
-                state.printPlayer(player, gameOver=True)
+                state.printPlayer(player)
                 break
 
 

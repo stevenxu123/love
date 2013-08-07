@@ -9,6 +9,7 @@ class GameServer(object):
 
     def __init__(self):
         self.sockets = {}
+        self.scores = {}
         return
 
     def sendState(self, state):
@@ -44,6 +45,7 @@ def main():
         conn, addr = s.accept()
         name = conn.recv(1024)
         serv.sockets[name] = conn
+        serv.scores[name] = 0
         conn.send(str(numRounds))
         message = conn.recv(1024)
         print message
@@ -51,7 +53,9 @@ def main():
     # run games
     for r in range(numRounds):
         game = Game(serv, numPlayers)
-        game.run()
+        winners = game.run()
+        for w in winners:
+            serv.scores[w.name] += 1
 
     # close player sockets
     for v in serv.sockets.values():
