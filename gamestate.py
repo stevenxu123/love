@@ -14,15 +14,18 @@ class GameState(object):
         return str(self.__dict__)
 
     def printField(self):
-        """Print field: public game information known to all players"""
+        """Print human-readable list of public game information"""
         print "="*50
-        cardsLeft = len(self.deck.cards)
-        print "cards left in deck:", "[]"*cardsLeft, cardsLeft
 
         # print what happened on the previous turn
         print self.actionSentence(self.currAction)
         print
-
+        
+        # print the number of cards remaining in the deck
+        cardsLeft = len(self.deck.cards)
+        print "cards left in deck:", "[]"*cardsLeft, cardsLeft
+        print
+        
         # print each player's name, status, and discards
         for player in self.players:
             if not player.alive:
@@ -40,72 +43,44 @@ class GameState(object):
             print
         return
 
-    def actionString(self, action):
-        if action is None:
-            return ""
-
-        card, actor, target, guess = action
-
-        if guess is not None:
-            return "([%s] %s >> %s, guess: %s)" % \
-                    (Deck.cardNames[card], actor.name, target.name, \
-                     Deck.cardNames[card])
-        elif target is not None:
-            return "([%s] %s >> %s)" % \
-                    (Deck.cardNames[card], actor.name, target.name)
-        else:
-            return "([%s] %s >> %s)" % \
-                    (Deck.cardNames[card], actor.name, None)
-
     def actionSentence(self, action):
         if action is None:
             return ""
-
         card, actor, target, guess = action
-        if guess:
-            if not target.alive:
-                return "%s played %s and guessed %s's hand correctly (for a %s)" % \
-                    (actor.name, Deck.cardNames[card], target.name, \
-                     Deck.cardNames[guess])
-            else:
-                return "%s played %s and guessed %s's hand (for a %s)" % \
-                    (actor.name, Deck.cardNames[card], target.name, \
-                     Deck.cardNames[guess])
-        elif target:
-            return "%s played %s and %s" % \
-                    (actor.name, Deck.cardNames[card],
-                     self.effectString(card, actor, target))
-        else:
-            return "%s played %s and nothing happened" % \
-                    (actor.name, Deck.cardNames[card])
 
-    def effectString(self, card, actor, target):
-        if card == Deck.KING:
-            return "swapped hands with " + target.name
-        elif card == Deck.PRINCE:
-            if not target.alive:
-                return "forced %s to discard the Princess!" % (target.name,)
-            else:
-                return "forced %s to discard a %s and draw a new card" % \
-                        (target.name, Deck.cardNames[target.discard[-1]])
-        elif card == Deck.HANDMAIDEN:
-            return "can't be targeted this round"
-        elif card == Deck.BARON:
-            if target is None:
-                result = ""
-            elif actor.alive and target.alive:
-                result = "and the duel ends in a tie"
-            elif actor.alive:
-                result = "%s loses the duel (with a %s)" % \
-                        (target.name, Deck.cardNames[target.discard[-1]])
-            else:
-                result = "%s loses the duel (with a %s)" % \
-                        (actor.name, Deck.cardNames[actor.discard[-1]])           
-            return "challenged %s to a duel\n" % (target.name,) + result
-        elif card == Deck.PRIEST:
-            return "peeked at %s's hand" % (target.name,)
+        if target is not None:
+            if card == Deck.KING:
+                result = "swapped hands with %s" % (target.name,)
+            elif card == Deck.PRINCE:
+                if not target.alive:
+                    subResult = "the Princess!"
+                else:
+                    subResult = "a %s then draw" % (Deck.cardNames[target.discard[-1]],)
+                result = "made %s discard %s" % (target.name, subResult)
+            elif card == Deck.HANDMAIDEN:
+                result = "can't be targeted this round"
+            elif card == Deck.BARON:
+                if actor.alive and target.alive:
+                    subResult = "\t...and neither side prevails"
+                elif actor.alive:
+                    subResult = "\t...%s loses the duel with a %s" % \
+                                (target.name, Deck.cardNames[target.discard[-1]])
+                elif target.alive:
+                    subResult = "\t...%s loses the duel with a %s" % \
+                                (actor.name, Deck.cardNames[actor.discard[-1]])           
+                result = "challenged %s to a duel...\n%s" % (target.name, subResult)  
+            elif card == Deck.PRIEST:
+                result = "peeked at %s's hand" % (target.name,)
+            elif card == Deck.GUARD:
+                if not target.alive:
+                    subResult = "\t...It's super effective!"
+                else:
+                    subResult = "\t...It's not very effective..."
+                result = "guessed that %s has a %s...\n%s" % \
+                    (target.name, Deck.cardNames[guess], subResult)
         else:
-            return "made an illegal move"
+            result = "nothing happened"
+        return "%s played %s and %s" % (actor.name, Deck.cardNames[card], result)
 
     def printPlayer(self, player, gameOver=False):
         """Print human-readable list of attributes for this player"""
@@ -134,3 +109,4 @@ class GameState(object):
         print "your hand:  ", [Deck.cardNames[card] for card in player.hand]
         if player.peekCard:
             print "peek card:  ", Deck.cardNames[player.peekCard]
+        print
