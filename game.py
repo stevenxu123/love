@@ -81,7 +81,7 @@ class Game(object):
 
         actions = [(card, actor, target, None) for target in targets]
         if card == Deck.PRINCE:
-            actions.append( (card, actor, actor, None) )
+            actions.append((card, actor, actor, None))
 
         return actions
 
@@ -145,14 +145,6 @@ class Game(object):
 
             # execute the selected action
             self.executeAction(action)
-
-            # replace old Players in currAction with ones after execution
-            #actor = self.players[self.players.index(self.currAction[1])]
-            #if self.currAction[2] is None:
-            #    target = None
-            #else:
-            #    target = self.players[self.players.index(self.currAction[2])]
-            #self.currAction = (self.currAction[0], actor, target, self.currAction[3])
 
             # advance to the next turn
             self.nextTurn()

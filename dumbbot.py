@@ -1,38 +1,49 @@
 import pickle
 import sys
 import socket
+import time
 from deck import *
 from gamestate import *
 
 class DumbBot(object):
 
     def __init__(self):
-        # prompt for IP, port, name
-        if len(sys.argv) == 4:
+        # prompt for IP, port, name, delay
+        if len(sys.argv) == 5:
             addr = sys.argv[1]
             port = int(sys.argv[2])
             name = sys.argv[3]
+            self.delay = float(sys.argv[4])
         else:
             addr = raw_input("Enter hostname/IP address: ")
             port = int(raw_input("Enter port #: "))
             name = raw_input("Enter bot name: ")
+            self.delay = float(raw_input("Enter delay (0 for prompt): "))
 
         # set up socket connection
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.connect((addr, port))
+        
         # send name, get rounds
         s.send(name)
         numRounds = int(s.recv(1024))
         s.send(name + " is all set!")
-        # update member variables
+        
+        # set member variables
         self.name = name
         self.s = s
         self.numRounds = numRounds
         return
 
+    def update(self, state):
+        return
+
     def move(self, state):
-        pause = raw_input("enter: ")
+        if self.delay == 0:
+            pause = raw_input("enter: ")
+        else:
+            time.sleep(self.delay)
         return state.legalActions[0]
 
     def myPlayer(self, state):
@@ -47,6 +58,8 @@ class DumbBot(object):
             state = pickle.loads(self.s.recv(1024))
 
             while not state.gameOver:
+                # allow bot to update itself using new state
+                self.update(state)
                 # print field and bot player's information
                 state.printField()
                 state.printPlayer(self.myPlayer(state))
