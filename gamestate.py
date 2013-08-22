@@ -20,12 +20,12 @@ class GameState(object):
         # print what happened on the previous turn
         print self.actionSentence(self.currAction)
         print
-        
+
         # print the number of cards remaining in the deck
         cardsLeft = len(self.deck.cards)
         print "cards left in deck:", "[]"*cardsLeft, cardsLeft
         print
-        
+
         # print each player's name, status, and discards
         for player in self.players:
             if not player.alive:
@@ -45,7 +45,7 @@ class GameState(object):
 
     def actionSentence(self, action):
         if action is None:
-            return ""
+            return "Let the game begin!"
         card, actor, target, guess = action
 
         if target is not None:
@@ -67,8 +67,8 @@ class GameState(object):
                                 (target.name, Deck.cardNames[target.discard[-1]])
                 elif target.alive:
                     subResult = "\t...%s loses the duel with a %s" % \
-                                (actor.name, Deck.cardNames[actor.discard[-1]])           
-                result = "challenged %s to a duel...\n%s" % (target.name, subResult)  
+                                (actor.name, Deck.cardNames[actor.discard[-1]])
+                result = "challenged %s to a duel...\n%s" % (target.name, subResult)
             elif card == Deck.PRIEST:
                 result = "peeked at %s's hand" % (target.name,)
             elif card == Deck.GUARD:
@@ -93,17 +93,20 @@ class GameState(object):
             else:
                 print "your status:  (T_T\")"
                 print "You lost! You have brought dishonor upon yourself."
-            print "\n", "GG "*6, "GOOD GAME ", "GG "*7
+
+            print
+            print "="*50
+            print "GG "*6, "GOOD GAME ", "GG "*7
             return
         elif not player.alive:
-            print "your status:  (x_x\") RIP"
+            print "your status: (x_x\") RIP"
             return
         elif player == self.currPlayer:
             print "your status: <(._.<) it's your turn!"
         elif not player.targetable:
             print "your status: \(._.)/ can't touch this"
         else:
-            print "your status:  (-_- ) ... ... ..."
+            print "your status: (-_- ) ... ... ..."
 
         hand = ""
         for card in player.hand:

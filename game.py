@@ -50,7 +50,7 @@ class Game(object):
             # you may only play a KING or PRINCE with no COUNTESS in hand
             if Deck.KING in hand:
                 actions += self.allTargetActions(Deck.KING, actor)
-            elif Deck.PRINCE in hand:
+            if Deck.PRINCE in hand:
                 actions += self.allTargetActions(Deck.PRINCE, actor)
 
         if Deck.HANDMAIDEN in hand:
@@ -151,7 +151,7 @@ class Game(object):
             # advance to the next turn
             self.nextTurn()
 
-        
+
         maxCard = max(p.hand[0] for p in self.players if p.alive)
         winners = [p for p in self.players if p.alive and p.hand[0] == maxCard]
         if len(winners) > 1:
@@ -173,4 +173,4 @@ class Game(object):
         self.server.sendState(finalState)
 
         # return winners
-        return winners 
+        return winners

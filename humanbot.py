@@ -5,36 +5,11 @@ from dumbbot import *
 class HumanBot(DumbBot):
 
     def move(self, state):
-        return self.polishedMakeMove(state)
-
-    def verboseMakeMove(self, state):
-        print "~"*50
-        print "LEGAL ACTIONS"
-        print "~"*50
-
-        if not state.legalActions:
-            print "Something wrong here; how can you have no legal actions?"
-            return None
-
-        # print exhaustive list of actions
-        for i, action in enumerate(state.legalActions):
-            print "[%d]\t %s" % (i, state.actionString(action))
-
-        print "~"*40
-        # prompt human to select an action by entering a number
-        actionIndex = input("Select action to make: ")
-        while actionIndex not in range(len(state.legalActions)):
-            actionIndex = input("Please enter a number to select an action: ")
-        print "~"*40
-
-        return state.legalActions[actionIndex]
-
-    def polishedMakeMove(self, state):
         if not state.legalActions:
             raise Exception("The only winning move is not to play.")
 
         print "~"*50
-        print "YOUR MOVE"
+        print "           (>._.)> YOUR MOVE <(._.<)"
         print "~"*50
 
         allTargets = {}
@@ -46,54 +21,59 @@ class HumanBot(DumbBot):
                 allTargets[card].append(target)
 
         confirm = "n"
-        while confirm in ("n", "N", "no", "NO", "No", "Nein"):
+        while confirm in ("n", "N", "no", "NO", "No", "Nein", "NEIN"):
             confirm, action = self.promptAction(state, allTargets)
-            print "confirm: ", confirm
-            print "action:  ", action
-        print "~"*50
 
         return action
 
     def promptAction(self, state, allTargets):
         # choose a card
-        print "playable cards: " ,
         allCards = allTargets.keys()
+
         for i, card in enumerate(allCards):
-            print "(%d): [%s]      " % (i, Deck.cardNames[card]) ,
-        print
-        myCard = allCards[prompt("select a card:  ", range(len(allCards)))]
+            print "(%d): [%s]" % (i, Deck.cardNames[card])
+
+        if len(allCards) == 1:
+            raw_input("select a card to play:  ")
+            myCard = allCards[0]
+        else:
+            myCard = allCards[prompt("select a card to play:  ", \
+                                     range(len(allCards)))]
         print
 
+        # choose a target
         myTargets = allTargets[myCard]
-        if len(myTargets) > 1:
-            print "targetable players:  " ,
+        if len(myTargets) == 1:
+            myTarget = myTargets[0]
+        else:
             for i, target in enumerate(myTargets):
                 targetName = target.name
                 if targetName == self.name:
                     targetName = "You"
-                print "(%d): %s      " % (i, targetName),
-            print
+                print "(%d): %s" % (i, targetName)
+
             targetChoice = prompt("choose a target: ", range(len(myTargets)))
             myTarget = myTargets[targetChoice]
-        else:
-            myTarget = myTargets[0]
+            print
 
+        # if GUARD, choose a card to guess
         if myCard == Deck.GUARD:
             guesses = range(Deck.PRINCESS, Deck.GUARD, -1)
             for guess in guesses:
                 print "(%d): [%s]" % (guess, Deck.cardNames[guess])
             myGuess = prompt("pick a card to guess: ", guesses)
+            print
         else:
             myGuess = None
 
         myAction = (myCard, state.currPlayer, myTarget, myGuess)
-        print "You are about to play %s%s" % \
+        print "you are about to play %s%s." % \
               (Deck.cardNames[myCard], self.myActionSentence(myAction))
-        confirm = raw_input("Continue? ")
+        confirm = raw_input("continue? ")
         print
 
-        if confirm == "n":
-            print "No?? Please make up your mind..."
+        if confirm in ("n", "N", "no", "NO", "No", "Nein", "NEIN"):
+            print "%s?? Please make up your mind..." % confirm
             print "~"*50
 
         return (confirm, myAction)
@@ -112,7 +92,7 @@ class HumanBot(DumbBot):
             else:
                 return " and make %s discard and redraw" % (target.name,)
         elif card == Deck.HANDMAIDEN:
-            return "which grants you immunity from other cards for one round"
+            return ", which gives you immunity until next turn"
         elif card == Deck.BARON:
             return " and engage battle with %s" % (target.name,)
         elif card == Deck.PRIEST:
@@ -130,13 +110,13 @@ def prompt(firstMessage, options, secondMessage=None):
 
     try:
         answer = int(raw_input(firstMessage))
-    except TypeError:
+    except ValueError:
         answer = None
 
     while answer is None or answer not in options:
         try:
             answer = int(raw_input(secondMessage))
-        except TypeError:
+        except ValueError:
             answer = None
 
     return answer
