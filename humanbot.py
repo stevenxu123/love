@@ -4,17 +4,13 @@ from dumbbot import *
 
 class HumanBot(DumbBot):
 
-    def __init__(self):
-        return
-
-    def makeMove(self, state):
-        verboseMakeMove(state)
-        return
+    def move(self, state):
+        return self.polishedMakeMove(state)
 
     def verboseMakeMove(self, state):
-        print "~"*40
+        print "~"*50
         print "LEGAL ACTIONS"
-        print "~"*40
+        print "~"*50
 
         if not state.legalActions:
             print "Something wrong here; how can you have no legal actions?"
@@ -35,50 +31,116 @@ class HumanBot(DumbBot):
 
     def polishedMakeMove(self, state):
         if not state.legalActions:
-            print "A curious game; the only winning move is not to play."
-            return None
-        print "~~~~~~~~~~~~~"
-        print "LEGAL ACTIONS"
-        print "~~~~~~~~~~~~~"
+            raise Exception("The only winning move is not to play.")
 
-        actionCards = []
-        for action in state.legalActions:
-            (card, _, _, _) = action
-            if card not in actionCards:
-                actionCards.append(card)
-        for i, actionCard in enumerate(actionCards):
-            print "[%d]\t %s" % (i, Deck.cardNames[actionCard])
-        actionCard = actionCards[prompt("Select a card to play: ", \
-                                        range(len(actionCards)))]
-        print "~"*40
-        targets = []
+        print "~"*50
+        print "YOUR MOVE"
+        print "~"*50
+
+        allTargets = {}
         for action in state.legalActions:
             (card, _, target, _) = action
-            if target is not None and card == actionCard:
-                targets.append(target)
-        for i, target in enumerate(targets):
-            print "[%d]\t %s" % (i, target.name)
+            if card not in allTargets:
+                allTargets[card] = []
+            if target not in allTargets[card]:
+                allTargets[card].append(target)
 
-        if not targets:
-            return (actionCard, state.currPlayer, None, None)
+        confirm = "n"
+        while confirm in ("n", "N", "no", "NO", "No", "Nein"):
+            confirm, action = self.promptAction(state, allTargets)
+            print "confirm: ", confirm
+            print "action:  ", action
+        print "~"*50
 
-        target = targets[prompt("Choose a target: ", range(len(targets)))]
+        return action
 
-        if actionCard == Deck.GUARD:
-            guesses = range(Deck.PRIEST, Deck.PRINCESS+1)
-            for guess in guesses:
-                print "[%d]\t %s" % (guess, Deck.cardNames[guess])
-            guess = prompt("Guess: ", guesses)
+    def promptAction(self, state, allTargets):
+        # choose a card
+        print "playable cards: " ,
+        allCards = allTargets.keys()
+        for i, card in enumerate(allCards):
+            print "(%d): [%s]      " % (i, Deck.cardNames[card]) ,
+        print
+        myCard = allCards[prompt("select a card:  ", range(len(allCards)))]
+        print
+
+        myTargets = allTargets[myCard]
+        if len(myTargets) > 1:
+            print "targetable players:  " ,
+            for i, target in enumerate(myTargets):
+                targetName = target.name
+                if targetName == self.name:
+                    targetName = "You"
+                print "(%d): %s      " % (i, targetName),
+            print
+            targetChoice = prompt("choose a target: ", range(len(myTargets)))
+            myTarget = myTargets[targetChoice]
         else:
-            guess = None
+            myTarget = myTargets[0]
 
-        return (actionCard, state.currPlayer, target, guess)
+        if myCard == Deck.GUARD:
+            guesses = range(Deck.PRINCESS, Deck.GUARD, -1)
+            for guess in guesses:
+                print "(%d): [%s]" % (guess, Deck.cardNames[guess])
+            myGuess = prompt("pick a card to guess: ", guesses)
+        else:
+            myGuess = None
 
-    def prompt(firstMessage, options):
-        answer = input(firstMessage)
-        while answer not in options:
-            answer = input(firstMessage)
-        return answer
+        myAction = (myCard, state.currPlayer, myTarget, myGuess)
+        print "You are about to play %s%s" % \
+              (Deck.cardNames[myCard], self.myActionSentence(myAction))
+        confirm = raw_input("Continue? ")
+        print
+
+        if confirm == "n":
+            print "No?? Please make up your mind..."
+            print "~"*50
+
+        return (confirm, myAction)
+
+    def myActionSentence(self, action):
+        card, actor, target, guess = action
+
+        if target is None:
+            return ", targeting no one"
+
+        elif card == Deck.KING:
+            return " and swap hands with %s" % (target.name,)
+        elif card == Deck.PRINCE:
+            if target.name == self.name:
+                return " and make yourself discard and redraw"
+            else:
+                return " and make %s discard and redraw" % (target.name,)
+        elif card == Deck.HANDMAIDEN:
+            return "which grants you immunity from other cards for one round"
+        elif card == Deck.BARON:
+            return " and engage battle with %s" % (target.name,)
+        elif card == Deck.PRIEST:
+            return " and peek at %s's hand" % (target.name,)
+        elif card == Deck.GUARD:
+            return " and guess if %s's card is a %s" % \
+                   (target.name, Deck.cardNames[guess])
+
+        raise Exception("Impossible! That action cannot be done")
+
+
+def prompt(firstMessage, options, secondMessage=None):
+    if secondMessage is None:
+        secondMessage = firstMessage
+
+    try:
+        answer = int(raw_input(firstMessage))
+    except TypeError:
+        answer = None
+
+    while answer is None or answer not in options:
+        try:
+            answer = int(raw_input(secondMessage))
+        except TypeError:
+            answer = None
+
+    return answer
+
 
 def main():
     bot = HumanBot()
