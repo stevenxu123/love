@@ -12,13 +12,13 @@ class DumbBot(object):
         if len(sys.argv) == 5:
             addr = sys.argv[1]
             port = int(sys.argv[2])
-            name = sys.argv[3]
-            self.delay = float(sys.argv[4])
+            self.name = sys.argv[3]
+            self.delay = int(sys.argv[4])
         else:
             addr = raw_input("Enter hostname/IP address: ")
             port = int(raw_input("Enter port #: "))
-            name = raw_input("Enter bot name: ")
-            self.delay = float(raw_input("Enter delay (0 for prompt): "))
+            self.name = raw_input("Enter bot name: ")
+            self.delay = int(raw_input("Step through execution? (1=yes): "))
 
         # set up socket connection
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -26,24 +26,21 @@ class DumbBot(object):
         s.connect((addr, port))
         
         # send name, get rounds
-        s.send(name)
-        numRounds = int(s.recv(1024))
-        s.send(name + " is all set!")
+        s.send(self.name)
+        self.numRounds = int(s.recv(1024))
+        s.send(self.name + " is all set!")
         
         # set member variables
-        self.name = name
         self.s = s
-        self.numRounds = numRounds
-        return
 
     def update(self, state):
         return
 
     def move(self, state):
-        if self.delay == 0:
+        if self.delay == 1:
             pause = raw_input("enter: ")
         else:
-            time.sleep(self.delay)
+            time.sleep(0.5)
         return state.legalActions[0]
 
     def myPlayer(self, state):
@@ -51,6 +48,9 @@ class DumbBot(object):
             if player.name == self.name:
                 return player
         raise Exception("Bot player is missing from game")
+
+    def myOpponents(self, state):
+        return [p for p in state.players if p.name != self.name]
 
     def run(self):
         # play games

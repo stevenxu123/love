@@ -103,6 +103,8 @@ class Game(object):
             pass
         elif card == Deck.KING:
             actor.hand, target.hand = target.hand, actor.hand
+            actor.peekCard = target.hand[0]
+            target.peekCard = actor.hand[0]
         # target is not None check unnecessary: PRINCE always has target
         elif card == Deck.PRINCE:
             if Deck.PRINCESS in target.hand:
