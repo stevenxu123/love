@@ -15,6 +15,9 @@ class Player:
     def __eq__(self, other):
         return isinstance(other, Player) and self.name == other.name
 
+    def __ne__(self, other):
+        return not isinstance(other, Player) or self.name != other.name
+
     def __str__(self):
         return str(self.__dict__)
 

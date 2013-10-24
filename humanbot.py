@@ -1,8 +1,12 @@
 from deck import *
 from gamestate import *
-from dumbbot import *
+from infobot import *
 
-class HumanBot(DumbBot):
+class HumanBot(InfoBot):
+
+    def __init__(self, trackCards=True):
+        InfoBot.__init__(self, trackCards)
+        self.delay = 0
 
     def move(self, state):
         if not state.legalActions:
@@ -37,7 +41,7 @@ class HumanBot(DumbBot):
             raw_input("select a card to play:  ")
             myCard = allCards[0]
         else:
-            myCard = allCards[prompt("select a card to play:  ", \
+            myCard = allCards[prompt("select a card to play:  ",
                                      range(len(allCards)))]
         print
 
@@ -57,7 +61,7 @@ class HumanBot(DumbBot):
             print
 
         # if GUARD, choose a card to guess
-        if myCard == Deck.GUARD:
+        if myCard == Deck.GUARD and myTarget is not None:
             guesses = range(Deck.PRINCESS, Deck.GUARD, -1)
             for guess in guesses:
                 print "(%d): [%s]" % (guess, Deck.cardNames[guess])
@@ -123,7 +127,7 @@ def prompt(firstMessage, options, secondMessage=None):
 
 
 def main():
-    bot = HumanBot()
+    bot = HumanBot(trackCards=True)
     bot.run()
 
 if __name__== "__main__":

@@ -18,29 +18,31 @@ class DumbBot(object):
             addr = raw_input("Enter hostname/IP address: ")
             port = int(raw_input("Enter port #: "))
             self.name = raw_input("Enter bot name: ")
-            self.delay = int(raw_input("Step through execution? (1=yes): "))
+            self.delay = int(raw_input("Enter delay (-1 for step-through): "))
 
         # set up socket connection
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.connect((addr, port))
-        
+
         # send name, get rounds
         s.send(self.name)
         self.numRounds = int(s.recv(1024))
         s.send(self.name + " is all set!")
-        
+
         # set member variables
         self.s = s
 
     def update(self, state):
         return
 
-    def move(self, state):
-        if self.delay == 1:
-            pause = raw_input("enter: ")
+    def wait(self, delay):
+        if delay < 0:
+            pause = raw_input("Enter: ")
         else:
-            time.sleep(0.5)
+            time.sleep(delay + 0.1)
+
+    def move(self, state):
         return state.legalActions[0]
 
     def myPlayer(self, state):
@@ -56,23 +58,26 @@ class DumbBot(object):
         # play games
         for r in range(self.numRounds):
             state = pickle.loads(self.s.recv(1024))
+            # print field and bot player's information
+            state.printField()
+            state.printPlayer(self.myPlayer(state))
 
             while not state.gameOver:
                 # allow bot to update itself using new state
                 self.update(state)
+                # if I am currPlayer, send my move
+                if state.currPlayer.name == self.name:
+                    # wait for specified delay (if any)
+                    self.wait(self.delay)
+                    self.s.send(pickle.dumps(self.move(state),
+                                             pickle.HIGHEST_PROTOCOL))
+
+                # load next state
+                state = pickle.loads(self.s.recv(1024))
                 # print field and bot player's information
                 state.printField()
                 state.printPlayer(self.myPlayer(state))
-                # if I am currPlayer, send my move
-                if state.currPlayer.name == self.name:
-                    self.s.send(pickle.dumps(self.move(state),
-                                             pickle.HIGHEST_PROTOCOL))
-                # load next state
-                state = pickle.loads(self.s.recv(1024))
 
-            # print field and bot player's information at end of game
-            state.printField()
-            state.printPlayer(self.myPlayer(state))
 
         # close bot socket
         self.s.close()
@@ -86,5 +91,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 

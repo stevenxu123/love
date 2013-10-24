@@ -41,6 +41,17 @@ class GameState(object):
                 discards += "[" + Deck.cardNames[card] + "]"
             print "disc:", discards
             print
+
+        if self.gameOver:
+            print "-"*18, "Final Cards", "-"*19
+            for player in self.players:
+                if not player.alive:
+                    print player.name, "  (x_x\")"
+                else:
+                    print player.name
+                    print "[" + Deck.cardNames[player.hand[0]] + "]"
+                print
+
         return
 
     def actionSentence(self, action):
@@ -100,6 +111,7 @@ class GameState(object):
             return
         elif not player.alive:
             print "your status: (x_x\") RIP"
+            print
             return
         elif player == self.currPlayer:
             print "your status: <(._.<) it's your turn!"

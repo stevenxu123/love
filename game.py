@@ -117,6 +117,8 @@ class Game(object):
             # should be true: target is actor
             target.targetable = False
         elif card == Deck.BARON:
+            actor.peekCard = target.hand[0]
+            target.peekCard = actor.hand[0]
             if actor.hand[0] > target.hand[0]:
                 target.loseGame()
             elif actor.hand[0] < target.hand[0]:
@@ -152,21 +154,33 @@ class Game(object):
             self.nextTurn()
 
 
+#        winner = None
+#        maxCard = -1
+#        maxDiscardLen = -1
+#        while self.currPlayer is not winner:
+#            if self.currPlayer.hand[0] > maxCard:
+#                winner = self.currPlayer
+#                maxCard = self.currPlayer.hand[0]
+#                maxDiscardLen = len(self.currPlayer.discard)
+#            elif self.currPlayer.hand[0] < maxCard:
+#                self.currPlayer.loseGame()
+#            # else: use tie-breaker rules
+#            elif len(self.currPlayer.discard) > maxDiscard:
+#                winner = self.currPlayer
+#                maxCard = self.currPlayer.hand[0]
+#                maxDiscardLen = len(self.currPlayer.discard)
+#            elif len(self.currPlayer.discard) < maxDiscard:
+#                self.currPlayer.loseGame()
+#            self.nextTurn()
+
         maxCard = max(p.hand[0] for p in self.players if p.alive)
         winners = [p for p in self.players if p.alive and p.hand[0] == maxCard]
-        if len(winners) > 1:
-            maxLen = max(len(p.discard) for p in self.players if p.alive)
-            for w in winners:
-                if len(w.discard) != maxLen:
-                    # for now, a tie on the tiebreak gives points to both players
-                    winners.remove(w)
+        maxDiscard = max(len(p.discard) for p in winners)
+        winners = [p for p in winners if len(p.discard) == maxDiscard]
         for w in winners:
             w.win = True
 
         # pass final state to players
-        for p in self.players:
-            if p.alive:
-                p.playCard()
         finalState = GameState(self.deck, self.players, None, \
                                [], self.currAction, True)
 
